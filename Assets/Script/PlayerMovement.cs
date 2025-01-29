@@ -14,6 +14,12 @@ public class PlayerMovement : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        
+        // Ensure the AI has a ball reference
+        if (isAI && ball == null)
+        {
+            ball = GameObject.FindGameObjectWithTag("Ball");
+        }
     }
 
     private void Update()
@@ -30,38 +36,35 @@ public class PlayerMovement : MonoBehaviour
 
     private void PlayerControl()
     {
-        float moveY = 0f;
-
-        if (Input.GetKey(KeyCode.UpArrow))
-        {
-            moveY = 1f;
-        }
-        else if (Input.GetKey(KeyCode.DownArrow))
-        {
-            moveY = -1f;
-        }
-
+        float moveY = Input.GetAxisRaw("Vertical"); // Smoother input handling
         playerMove = new Vector2(0, moveY);
     }
 
     private void AIControl()
     {
-        if (ball.transform.position.y > transform.position.y + 0.5f)
+        if (ball == null) return; // Prevent errors if ball is missing
+
+        float ballY = ball.transform.position.y;
+        float paddleY = transform.position.y;
+
+        float moveThreshold = 0.2f; // Reduce jitter by adding a dead zone
+
+        if (ballY > paddleY + moveThreshold)
         {
             playerMove = new Vector2(0, 1);
         }
-        else if (ball.transform.position.y < transform.position.y - 0.5f)
+        else if (ballY < paddleY - moveThreshold)
         {
             playerMove = new Vector2(0, -1);
         }
         else
         {
-            playerMove = new Vector2(0, 0);
+            playerMove = Vector2.zero;
         }
     }
 
     private void FixedUpdate()
     {
-        rb.velocity = playerMove * movementSpeed;  // Apply the velocity to move the paddle
+        rb.velocity = playerMove * movementSpeed;
     }
 }

@@ -6,13 +6,17 @@ using UnityEngine.SceneManagement;
 
 public class BallMovement : MonoBehaviour
 {
-    [SerializeField] private float initialSpeed = 10;
+    [SerializeField] private float initialSpeed = 10f;
     [SerializeField] private float speedIncrease = 0.25f;
     [SerializeField] private Text playerScore;
     [SerializeField] private Text AIScore;
     [SerializeField] private float delayTime = 2f;
-    [SerializeField] private int winScore = 5;  // Number of points to win the game
-    private bool gameEnded = false;  // Flag to stop game updates once a winner is declared
+    [SerializeField] private int winScore = 5;  
+
+    private Rigidbody2D rb;
+    private int hitCounter = 0;
+    private bool playerLostLastPoint = false;
+    private bool gameEnded = false;
 
     void Start()
     {
@@ -22,13 +26,13 @@ public class BallMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (gameEnded) return;  // Prevent updates if the game has ended
+        if (gameEnded) return;
         SetBallSpeed();
     }
 
     private void StartBall()
     {
-        if (gameEnded) return;  // Prevent starting the ball if the game has ended
+        if (gameEnded) return;
 
         float xDirection = playerLostLastPoint ? -1 : 1;
         rb.velocity = new Vector2(xDirection, 0) * (initialSpeed + speedIncrease * hitCounter);
@@ -36,7 +40,7 @@ public class BallMovement : MonoBehaviour
 
     private void ResetBall(bool playerLost)
     {
-        if (gameEnded) return;  // Prevent resetting the ball if the game has ended
+        if (gameEnded) return;
 
         rb.velocity = Vector2.zero;
         transform.position = Vector2.zero;
@@ -52,7 +56,7 @@ public class BallMovement : MonoBehaviour
 
     private void PlayerBounce(Transform myObject)
     {
-        if (gameEnded) return;  // Prevent bouncing if the game has ended
+        if (gameEnded) return;
 
         hitCounter++;
 
@@ -67,9 +71,9 @@ public class BallMovement : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (gameEnded) return;  // Prevent collisions if the game has ended
+        if (gameEnded) return;
 
-        if (collision.gameObject.name == "Player" || collision.gameObject.name == "AI")
+        if (collision.gameObject.CompareTag("Player") || collision.gameObject.CompareTag("AI"))
         {
             PlayerBounce(collision.transform);
         }
@@ -77,15 +81,15 @@ public class BallMovement : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (gameEnded) return;  // Prevent scoring if the game has ended
+        if (gameEnded) return;
 
-        if (transform.position.x > 0)
-        {
-            UpdateScore(playerScore, true);
-        }
-        else if (transform.position.x < 0)
+        if (collision.gameObject.CompareTag("GoalPlayer"))
         {
             UpdateScore(AIScore, false);
+        }
+        else if (collision.gameObject.CompareTag("GoalAI"))
+        {
+            UpdateScore(playerScore, true);
         }
 
         CheckWinner();
@@ -116,10 +120,9 @@ public class BallMovement : MonoBehaviour
     {
         Debug.Log(winner + " Wins!");
         rb.velocity = Vector2.zero;
-        gameEnded = true;  // Set gameEnded to true to prevent further updates
-        rb.isKinematic = true;  // Disable ball physics to ensure it stops moving
+        gameEnded = true;
+        rb.isKinematic = true;  
 
-        // Load the game-over scene
         SceneManager.LoadSceneAsync(3);
     }
 }
